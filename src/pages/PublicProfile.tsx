@@ -104,22 +104,36 @@ const PublicProfile = () => {
   const { data: categories = [] } = useQuery({
     queryKey: ["public-categories", userId],
     queryFn: async () => {
-      if (!username) throw new Error("Username is required");
+      if (!username || !userId) throw new Error("Username and userId are required");
 
-      // Set the username parameter for RLS policy
-      await supabase.rpc('set_request_parameter', {
-        name: 'username',
-        value: username
-      });
+      try {
+        // Set the username parameter for RLS policy
+        const { error: rpcError } = await supabase.rpc('set_request_parameter', {
+          name: 'username',
+          value: username
+        });
 
-      const { data, error } = await supabase
-        .from("categories")
-        .select("*")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: true });
+        if (rpcError) {
+          console.error('Error setting request parameter:', rpcError);
+          throw rpcError;
+        }
 
-      if (error) throw error;
-      return data as Category[];
+        const { data, error } = await supabase
+          .from("categories")
+          .select("*")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: true });
+
+        if (error) {
+          console.error('Error fetching categories:', error);
+          throw error;
+        }
+
+        return data as Category[];
+      } catch (err) {
+        console.error('Error in categories query:', err);
+        throw err;
+      }
     },
     enabled: !!userId && !!username,
   });
@@ -127,6 +141,8 @@ const PublicProfile = () => {
   const { data: products = [] } = useQuery({
     queryKey: ["public-products", userId],
     queryFn: async () => {
+      if (!userId) throw new Error("User ID is required");
+
       const { data, error } = await supabase
         .from("products")
         .select("*")
