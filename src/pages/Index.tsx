@@ -27,20 +27,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useQueryClient } from "@tanstack/react-query";
 
-interface Category {
-  id: string;
-  name: string;
-}
-
-interface Product {
-  id: string;
-  name: string;
-  brand: string | null;
-  image_url: string | null;
-  affiliate_link: string | null;
-  category_id: string;
-}
-
 const Index = () => {
   const [session, setSession] = useState<any>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -59,7 +45,6 @@ const Index = () => {
 
     return () => {
       subscription.unsubscribe();
-      // Cleanup queries on unmount
       queryClient.cancelQueries();
     };
   }, [queryClient]);
@@ -70,6 +55,7 @@ const Index = () => {
       const { data, error } = await supabase
         .from("categories")
         .select("*")
+        .eq("user_id", session?.user?.id)
         .order("created_at", { ascending: true });
 
       if (error) {
@@ -77,7 +63,7 @@ const Index = () => {
         throw error;
       }
 
-      return data as Category[];
+      return data;
     },
     enabled: !!session,
   });
@@ -88,6 +74,7 @@ const Index = () => {
       const { data, error } = await supabase
         .from("products")
         .select("*")
+        .eq("user_id", session?.user?.id)
         .order("created_at", { ascending: true });
 
       if (error) {
@@ -95,7 +82,7 @@ const Index = () => {
         throw error;
       }
 
-      return data as Product[];
+      return data;
     },
     enabled: !!session,
   });

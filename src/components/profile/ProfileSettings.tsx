@@ -110,7 +110,7 @@ const ProfileSettings = ({ open, onOpenChange, userEmail }: ProfileSettingsProps
               disabled={isLoading}
             />
             <p className="text-sm text-muted-foreground">
-              This will be your custom URL: mystash.me/{username}
+              This will be your custom URL: {window.location.origin}/{username}
             </p>
           </div>
           <div className="flex justify-end space-x-2">
