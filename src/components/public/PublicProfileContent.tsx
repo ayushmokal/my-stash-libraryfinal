@@ -1,4 +1,4 @@
-import { CategorySection } from "@/components/stash/CategorySection";
+import CategorySection from "@/components/stash/CategorySection";
 import PublicProductCard from "./PublicProductCard";
 
 interface Category {
@@ -23,21 +23,30 @@ interface PublicProfileContentProps {
 
 const PublicProfileContent = ({ username, categories, products }: PublicProfileContentProps) => {
   return (
-    <div className="container py-8 space-y-8">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold">{username}'s stash</h1>
-      </header>
+    <div className="min-h-screen bg-background">
+      <div className="container py-8 space-y-8 max-w-7xl mx-auto px-4">
+        <header className="text-center mb-12">
+          <h1 className="text-4xl font-bold tracking-tight">{username}'s stash</h1>
+          <p className="mt-2 text-muted-foreground">Check out my favorite products</p>
+        </header>
 
-      <div className="space-y-12">
-        {categories.map((category) => (
-          <CategorySection key={category.id} title={category.name}>
-            {products
-              .filter((product) => product.category_id === category.id)
-              .map((product) => (
-                <PublicProductCard key={product.id} product={product} />
-              ))}
-          </CategorySection>
-        ))}
+        <div className="space-y-16">
+          {categories.map((category) => {
+            const categoryProducts = products.filter(
+              (product) => product.category_id === category.id
+            );
+
+            if (categoryProducts.length === 0) return null;
+
+            return (
+              <CategorySection key={category.id} title={category.name}>
+                {categoryProducts.map((product) => (
+                  <PublicProductCard key={product.id} product={product} />
+                ))}
+              </CategorySection>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
