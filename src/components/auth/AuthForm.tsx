@@ -62,7 +62,7 @@ const AuthForm = ({ initialUsername = "" }: AuthFormProps) => {
         {initialUsername ? (
           <>
             <h2 className="text-2xl font-semibold">Now, create your account</h2>
-            <p className="text-muted-foreground">mystash.me/{initialUsername} is yours!</p>
+            <p className="text-muted-foreground">{window.location.origin}/{initialUsername} is yours!</p>
           </>
         ) : (
           <h2 className="text-2xl font-semibold">Sign in to your account</h2>
