@@ -41,18 +41,6 @@ const AuthForm = ({ initialUsername = "" }: AuthFormProps) => {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-      });
-
-      if (error) throw error;
-    } catch (error: any) {
-      toast.error(error.message || "Failed to sign in with Google");
-    }
-  };
-
   return (
     <div className="w-full max-w-md mx-auto space-y-6 animate-fade-in">
       <div className="text-center space-y-2">
@@ -92,18 +80,6 @@ const AuthForm = ({ initialUsername = "" }: AuthFormProps) => {
           disabled={isLoading}
         >
           {initialUsername ? "Create Account" : "Sign In"}
-        </Button>
-
-        <div className="text-center text-sm text-gray-500">or</div>
-
-        <Button 
-          type="button"
-          variant="outline"
-          className="w-full bg-white hover:bg-gray-50"
-          onClick={handleGoogleSignIn}
-          disabled={isLoading}
-        >
-          Sign in with Google
         </Button>
       </form>
     </div>
