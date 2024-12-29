@@ -51,16 +51,20 @@ const ProductCard = ({ product }: ProductCardProps) => {
 
   return (
     <>
-      <Card className="overflow-hidden hover:shadow-lg transition-shadow relative">
+      <Card className="group relative flex flex-col overflow-hidden hover:shadow-lg transition-shadow">
         {user && (
-          <div className="absolute top-2 right-2 z-10">
+          <div className="absolute top-2 right-2 z-50">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="bg-white/80 backdrop-blur-sm hover:bg-white"
+                >
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" className="w-[200px]">
                 <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
                   Edit
                 </DropdownMenuItem>
