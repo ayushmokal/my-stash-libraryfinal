@@ -34,12 +34,10 @@ const ProductCard = ({ product }: ProductCardProps) => {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
     });
 
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -53,19 +51,26 @@ const ProductCard = ({ product }: ProductCardProps) => {
     <>
       <Card className="group relative flex flex-col overflow-hidden hover:shadow-lg transition-shadow">
         {user && (
-          <div className="absolute top-2 right-2 z-50">
+          <div className="absolute top-2 right-2 z-[100]">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="bg-white/80 backdrop-blur-sm hover:bg-white"
+                  className="bg-white/80 backdrop-blur-sm hover:bg-white relative z-[100]"
                 >
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-[200px]">
-                <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
+              <DropdownMenuContent 
+                align="end" 
+                className="w-[200px] z-[100]"
+                sideOffset={5}
+              >
+                <DropdownMenuItem 
+                  onClick={() => setIsEditDialogOpen(true)}
+                  className="cursor-pointer"
+                >
                   Edit
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -93,7 +98,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
               href={product.affiliate_link}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800"
+              className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 relative z-[90]"
             >
               Buy now <ExternalLink className="ml-1 h-4 w-4" />
             </a>
