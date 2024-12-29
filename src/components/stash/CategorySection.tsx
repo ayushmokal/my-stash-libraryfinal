@@ -5,7 +5,7 @@ interface CategorySectionProps {
   children: ReactNode;
 }
 
-const CategorySection = ({ title, children }: CategorySectionProps) => {
+export const CategorySection = ({ title, children }: CategorySectionProps) => {
   return (
     <section className="w-full space-y-4 animate-fade-in">
       <h2 className="text-2xl font-semibold px-4 py-2 bg-stash-gray rounded-lg">
