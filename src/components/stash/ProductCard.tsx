@@ -38,18 +38,21 @@ const ProductCard = ({ product }: ProductCardProps) => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    const subscription = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    // Initial auth state
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
     });
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      subscription.unsubscribe();
+      // Cleanup any pending queries
+      queryClient.cancelQueries({ queryKey: ["products"] });
+    };
+  }, [queryClient]);
 
   const handleDelete = async () => {
     try {
@@ -60,7 +63,6 @@ const ProductCard = ({ product }: ProductCardProps) => {
 
       if (error) throw error;
 
-      // If product has an image, delete it from storage
       if (product.image_url) {
         const imagePath = product.image_url.split("/").pop();
         if (imagePath) {
@@ -85,20 +87,20 @@ const ProductCard = ({ product }: ProductCardProps) => {
     <>
       <Card className="group relative flex flex-col overflow-hidden hover:shadow-lg transition-shadow">
         {user && (
-          <div className="absolute top-2 right-2 z-[100]">
+          <div className="absolute top-2 right-2 z-50">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="bg-white/80 backdrop-blur-sm hover:bg-white relative z-[100]"
+                  className="bg-white/80 backdrop-blur-sm hover:bg-white"
                 >
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent 
                 align="end" 
-                className="w-[200px] z-[100]"
+                className="w-[200px]"
                 sideOffset={5}
               >
                 <DropdownMenuItem 
@@ -118,15 +120,17 @@ const ProductCard = ({ product }: ProductCardProps) => {
             </DropdownMenu>
           </div>
         )}
-        {product.image_url && (
-          <div className="aspect-square w-full overflow-hidden">
-            <img
-              src={product.image_url}
-              alt={product.name}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        )}
+        <div className="relative">
+          {product.image_url && (
+            <div className="aspect-square w-full overflow-hidden">
+              <img
+                src={product.image_url}
+                alt={product.name}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
+        </div>
         <CardHeader className="space-y-1">
           <CardTitle className="text-xl">{product.name}</CardTitle>
           {product.brand && (
@@ -139,7 +143,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
               href={product.affiliate_link}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 relative z-[90]"
+              className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800"
             >
               Buy now <ExternalLink className="ml-1 h-4 w-4" />
             </a>
@@ -147,7 +151,16 @@ const ProductCard = ({ product }: ProductCardProps) => {
         )}
       </Card>
 
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      <Dialog 
+        open={isEditDialogOpen} 
+        onOpenChange={(open) => {
+          setIsEditDialogOpen(open);
+          if (!open) {
+            // Cleanup when dialog closes
+            queryClient.invalidateQueries({ queryKey: ["products"] });
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Edit Product</DialogTitle>

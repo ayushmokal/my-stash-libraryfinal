@@ -25,6 +25,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface Category {
   id: string;
@@ -44,20 +45,24 @@ const Index = () => {
   const [session, setSession] = useState<any>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
+    const subscription = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    // Initial auth state
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
     });
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      subscription.unsubscribe();
+      // Cleanup queries on unmount
+      queryClient.cancelQueries();
+    };
+  }, [queryClient]);
 
   const { data: categories = [], isLoading: categoriesLoading } = useQuery({
     queryKey: ["categories"],
