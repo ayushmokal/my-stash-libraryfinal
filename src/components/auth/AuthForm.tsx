@@ -22,7 +22,19 @@ const AuthForm = ({ initialUsername = "" }: AuthFormProps) => {
     try {
       if (initialUsername) {
         // Sign up flow
-        const { error: signUpError } = await supabase.auth.signUp({
+        const { data: existingProfile } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('username', initialUsername)
+          .maybeSingle();
+
+        if (existingProfile) {
+          toast.error("This username is already taken. Please choose another one.");
+          setIsLoading(false);
+          return;
+        }
+
+        const { error: signUpError, data: signUpData } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -33,7 +45,6 @@ const AuthForm = ({ initialUsername = "" }: AuthFormProps) => {
         });
 
         if (signUpError) {
-          // Handle user already exists error specifically
           if (signUpError.message === "User already registered") {
             toast.error("This email is already registered. Please sign in instead.", {
               duration: 5000,
@@ -48,7 +59,22 @@ const AuthForm = ({ initialUsername = "" }: AuthFormProps) => {
           throw signUpError;
         }
 
+        // Update profile with username immediately after signup
+        if (signUpData.user) {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .update({ username: initialUsername })
+            .eq('id', signUpData.user.id);
+
+          if (profileError) {
+            console.error("Error updating profile:", profileError);
+            toast.error("Failed to set username");
+            return;
+          }
+        }
+
         toast.success("Successfully signed up! Check your email for confirmation.");
+        navigate("/dashboard");
       } else {
         // Sign in flow
         const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -57,7 +83,6 @@ const AuthForm = ({ initialUsername = "" }: AuthFormProps) => {
         });
 
         if (signInError) {
-          // Handle email not confirmed error specifically
           if (signInError.message === "Email not confirmed") {
             toast.error("Please confirm your email address before signing in. Check your inbox for the confirmation link.", {
               duration: 5000,

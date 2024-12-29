@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import AuthForm from "@/components/auth/AuthForm";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -19,12 +20,15 @@ const Index = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session) {
         fetchUsername(session.user.id);
+      } else {
+        navigate('/auth');
       }
     });
 
@@ -32,13 +36,15 @@ const Index = () => {
       setSession(session);
       if (session) {
         fetchUsername(session.user.id);
+      } else {
+        navigate('/auth');
       }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [navigate]);
 
   const fetchUsername = async (userId: string) => {
     try {
@@ -56,6 +62,12 @@ const Index = () => {
 
       console.log('Profile data:', data);
       setUsername(data?.username || null);
+
+      // If no username is set, open profile settings
+      if (!data?.username) {
+        setIsProfileOpen(true);
+        toast.info("Please set your username to share your stash!");
+      }
     } catch (error: any) {
       console.error("Error fetching username:", error);
     }
@@ -68,7 +80,7 @@ const Index = () => {
         .from("categories")
         .select("*")
         .eq("user_id", session?.user?.id)
-        .order('created_at');  // Changed this line to use simple ordering
+        .order('created_at');
 
       if (error) {
         console.error("Error fetching categories:", error);
@@ -88,7 +100,7 @@ const Index = () => {
         .from("products")
         .select("*")
         .eq("user_id", session?.user?.id)
-        .order('created_at');  // Changed this line to use simple ordering
+        .order('created_at');
 
       if (error) {
         console.error("Error fetching products:", error);
@@ -105,6 +117,7 @@ const Index = () => {
     try {
       await supabase.auth.signOut();
       toast.success("Signed out successfully");
+      navigate('/auth');
     } catch (error: any) {
       console.error("Sign out error:", error);
       toast.error(error.message || "Failed to sign out");

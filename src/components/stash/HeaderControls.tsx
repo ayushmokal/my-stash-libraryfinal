@@ -9,7 +9,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useNavigate } from "react-router-dom";
 
 interface HeaderControlsProps {
   userEmail?: string;
@@ -26,12 +25,15 @@ const HeaderControls = ({
   onAddCategoryOpen,
   onSignOut,
 }: HeaderControlsProps) => {
-  const navigate = useNavigate();
-
   const handleShare = async () => {
     try {
       if (!username) {
-        toast.error("Please set a username in your profile settings first");
+        toast.error("Please set a username in your profile settings first", {
+          action: {
+            label: "Open Settings",
+            onClick: onProfileOpen,
+          },
+        });
         return;
       }
 
