@@ -114,25 +114,12 @@ const Index = () => {
 
   const handleSignOut = async () => {
     try {
-      // First clear the session state
-      setSession(null);
-      
-      // Then attempt to sign out from Supabase
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        console.error("Sign out error:", error);
-        // Even if there's an error, we'll redirect to auth page
-        // since we've already cleared the local session
-      }
-      
-      // Always navigate to auth page after clearing session
-      navigate('/auth');
+      await supabase.auth.signOut();
       toast.success("Signed out successfully");
+      navigate('/auth');
     } catch (error: any) {
       console.error("Sign out error:", error);
-      // Still redirect to auth page even if there's an error
-      navigate('/auth');
+      toast.error(error.message || "Failed to sign out");
     }
   };
 
