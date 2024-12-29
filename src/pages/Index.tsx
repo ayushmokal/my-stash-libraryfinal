@@ -10,7 +10,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import HeaderControls from "@/components/stash/HeaderControls";
 import StashContent from "@/components/stash/StashContent";
@@ -42,18 +41,24 @@ const Index = () => {
   }, []);
 
   const fetchUsername = async (userId: string) => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("username")
-      .eq("id", userId)
-      .single();
+    try {
+      console.log('Fetching username for user:', userId);
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("username")
+        .eq("id", userId)
+        .maybeSingle();
 
-    if (error) {
+      if (error) {
+        console.error("Error fetching username:", error);
+        return;
+      }
+
+      console.log('Profile data:', data);
+      setUsername(data?.username || null);
+    } catch (error: any) {
       console.error("Error fetching username:", error);
-      return;
     }
-
-    setUsername(data?.username);
   };
 
   const { data: categories = [], isLoading: categoriesLoading } = useQuery({
