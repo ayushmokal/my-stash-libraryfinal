@@ -31,7 +31,7 @@ const ProfileSettings = ({ open, onOpenChange, userEmail }: ProfileSettingsProps
           .from('profiles')
           .select('username')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
         
         if (profile?.username) {
           setUsername(profile.username);
@@ -59,7 +59,7 @@ const ProfileSettings = ({ open, onOpenChange, userEmail }: ProfileSettingsProps
           .from('profiles')
           .select('username')
           .eq('username', username)
-          .single();
+          .maybeSingle();
 
         if (existingUser) {
           toast.error("Username is already taken");
