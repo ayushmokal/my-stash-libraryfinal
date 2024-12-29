@@ -69,6 +69,11 @@ const PublicProfile = () => {
         setError(null);
         console.log('Fetching profile for username:', username);
         
+        if (!username) {
+          setError("Username is required");
+          return;
+        }
+
         const { data, error } = await supabase
           .from("profiles")
           .select("id")
