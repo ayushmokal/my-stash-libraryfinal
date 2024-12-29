@@ -68,7 +68,7 @@ const Index = () => {
         .from("categories")
         .select("*")
         .eq("user_id", session?.user?.id)
-        .order("created_at", { ascending: true });
+        .order('created_at', { ascending: true });
 
       if (error) {
         console.error("Error fetching categories:", error);
@@ -88,7 +88,7 @@ const Index = () => {
         .from("products")
         .select("*")
         .eq("user_id", session?.user?.id)
-        .order("created_at", { ascending: true });
+        .order('created_at', { ascending: true });
 
       if (error) {
         console.error("Error fetching products:", error);
