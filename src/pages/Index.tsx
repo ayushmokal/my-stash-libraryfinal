@@ -20,6 +20,7 @@ interface Product {
   brand: string | null;
   image_url: string | null;
   affiliate_link: string | null;
+  category_id: string;  // Added this field to match the database schema
 }
 
 const Index = () => {
