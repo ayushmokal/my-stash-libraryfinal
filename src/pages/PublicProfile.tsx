@@ -59,17 +59,34 @@ const PublicProductCard = ({ product }: { product: Product }) => {
 const PublicProfile = () => {
   const { username } = useParams();
   const [userId, setUserId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUserId = async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("username", username)
-        .maybeSingle();
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("username", username)
+          .maybeSingle();
 
-      if (data) {
+        if (error) throw error;
+        
+        if (!data) {
+          setError(`Profile "${username}" not found`);
+          return;
+        }
+
         setUserId(data.id);
+      } catch (err: any) {
+        console.error("Error fetching profile:", err);
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -107,6 +124,22 @@ const PublicProfile = () => {
     },
     enabled: !!userId,
   });
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-xl">Loading profile...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-xl text-red-500">{error}</p>
+      </div>
+    );
+  }
 
   if (!userId) {
     return (
