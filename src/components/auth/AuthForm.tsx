@@ -20,22 +20,36 @@ const AuthForm = ({ initialUsername = "" }: AuthFormProps) => {
     setIsLoading(true);
 
     try {
-      const { error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            username: initialUsername,
+      if (initialUsername) {
+        // Sign up flow
+        const { error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              username: initialUsername,
+            },
           },
-        },
-      });
+        });
 
-      if (signUpError) throw signUpError;
+        if (signUpError) throw signUpError;
 
-      toast.success("Successfully signed up!");
+        toast.success("Successfully signed up!");
+      } else {
+        // Sign in flow
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (signInError) throw signInError;
+
+        toast.success("Successfully signed in!");
+      }
+      
       navigate("/dashboard");
     } catch (error: any) {
-      toast.error(error.message || "Failed to sign up");
+      toast.error(error.message || "Failed to authenticate");
     } finally {
       setIsLoading(false);
     }
