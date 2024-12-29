@@ -63,7 +63,6 @@ const Index = () => {
       console.log('Profile data:', data);
       setUsername(data?.username || null);
 
-      // If no username is set, open profile settings
       if (!data?.username) {
         setIsProfileOpen(true);
         toast.info("Please set your username to share your stash!");
@@ -80,7 +79,7 @@ const Index = () => {
         .from("categories")
         .select("*")
         .eq("user_id", session?.user?.id)
-        .order('created_at');
+        .order('created_at', { ascending: true });
 
       if (error) {
         console.error("Error fetching categories:", error);
@@ -100,7 +99,7 @@ const Index = () => {
         .from("products")
         .select("*")
         .eq("user_id", session?.user?.id)
-        .order('created_at');
+        .order('created_at', { ascending: true });
 
       if (error) {
         console.error("Error fetching products:", error);
