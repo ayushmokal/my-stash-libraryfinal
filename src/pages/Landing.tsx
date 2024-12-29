@@ -18,23 +18,24 @@ const Landing = () => {
 
     setIsChecking(true);
     try {
-      const { data, error } = await supabase
+      const { data: existingUser, error } = await supabase
         .from("profiles")
         .select("username")
         .eq("username", username)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== "PGRST116") {
+      if (error) {
         throw error;
       }
 
-      if (data) {
+      if (existingUser) {
         toast.error("This username is already taken");
         return;
       }
 
       navigate("/auth", { state: { username } });
     } catch (error: any) {
+      console.error("Username check error:", error);
       toast.error(error.message || "Failed to check username");
     } finally {
       setIsChecking(false);
@@ -57,7 +58,7 @@ const Landing = () => {
               type="text"
               placeholder="your-name"
               value={username}
-              onChange={(e) => setUsername(e.target.value.toLowerCase())}
+              onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
               className="bg-white"
             />
           </div>
