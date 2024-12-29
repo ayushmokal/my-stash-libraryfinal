@@ -1,13 +1,8 @@
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { User, Plus } from "lucide-react";
 import AuthForm from "@/components/auth/AuthForm";
-import AddStuffCard from "@/components/stash/AddStuffCard";
-import CategorySection from "@/components/stash/CategorySection";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import ProductCard from "@/components/stash/ProductCard";
 import ProfileSettings from "@/components/profile/ProfileSettings";
 import AddCategoryForm from "@/components/stash/AddCategoryForm";
 import {
@@ -17,48 +12,53 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useQueryClient } from "@tanstack/react-query";
+import HeaderControls from "@/components/stash/HeaderControls";
+import StashContent from "@/components/stash/StashContent";
 
 const Index = () => {
   const [session, setSession] = useState<any>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
-  const queryClient = useQueryClient();
+  const [username, setUsername] = useState<string | null>(null);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session) {
-        console.log("User session:", session);
+        fetchUsername(session.user.id);
       }
     });
 
-    // Initial auth state
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session) {
-        console.log("Initial session:", session);
+        fetchUsername(session.user.id);
       }
     });
 
     return () => {
       subscription.unsubscribe();
-      queryClient.cancelQueries();
     };
-  }, [queryClient]);
+  }, []);
+
+  const fetchUsername = async (userId: string) => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("username")
+      .eq("id", userId)
+      .single();
+
+    if (error) {
+      console.error("Error fetching username:", error);
+      return;
+    }
+
+    setUsername(data?.username);
+  };
 
   const { data: categories = [], isLoading: categoriesLoading } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
-      console.log("Fetching categories for user:", session?.user?.id);
       const { data, error } = await supabase
         .from("categories")
         .select("*")
@@ -71,7 +71,6 @@ const Index = () => {
         throw error;
       }
 
-      console.log("Fetched categories:", data);
       return data;
     },
     enabled: !!session?.user?.id,
@@ -80,7 +79,6 @@ const Index = () => {
   const { data: products = [], isLoading: productsLoading } = useQuery({
     queryKey: ["products"],
     queryFn: async () => {
-      console.log("Fetching products for user:", session?.user?.id);
       const { data, error } = await supabase
         .from("products")
         .select("*")
@@ -93,7 +91,6 @@ const Index = () => {
         throw error;
       }
 
-      console.log("Fetched products:", data);
       return data;
     },
     enabled: !!session?.user?.id,
@@ -129,44 +126,13 @@ const Index = () => {
     <div className="container py-8 space-y-8">
       <header className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold">My stash</h1>
-        <div className="flex items-center gap-4">
-          <Dialog open={isAddCategoryOpen} onOpenChange={setIsAddCategoryOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="icon">
-                <Plus className="h-6 w-6" />
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Add New Category</DialogTitle>
-              </DialogHeader>
-              <AddCategoryForm />
-            </DialogContent>
-          </Dialog>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <User className="h-6 w-6" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>
-                {session.user.email}
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setIsProfileOpen(true)}>
-                Profile Settings
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => toast.info("Account settings coming soon!")}>
-                Account Settings
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleSignOut} className="text-red-600">
-                Sign out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        <HeaderControls
+          userEmail={session.user.email}
+          username={username}
+          onProfileOpen={() => setIsProfileOpen(true)}
+          onAddCategoryOpen={() => setIsAddCategoryOpen(true)}
+          onSignOut={handleSignOut}
+        />
       </header>
 
       <ProfileSettings
@@ -175,31 +141,20 @@ const Index = () => {
         userEmail={session.user.email}
       />
 
-      {categories.length === 0 ? (
-        <div className="text-center py-12">
-          <h2 className="text-2xl font-semibold mb-4">Welcome to My Stash!</h2>
-          <p className="text-muted-foreground mb-8">
-            Get started by creating your first category to organize your stuff.
-          </p>
-          <Button onClick={() => setIsAddCategoryOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Create Your First Category
-          </Button>
-        </div>
-      ) : (
-        <div className="space-y-12">
-          {categories.map((category) => (
-            <CategorySection key={category.id} title={category.name}>
-              {products
-                .filter((product) => product.category_id === category.id)
-                .map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              <AddStuffCard />
-            </CategorySection>
-          ))}
-        </div>
-      )}
+      <Dialog open={isAddCategoryOpen} onOpenChange={setIsAddCategoryOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Add New Category</DialogTitle>
+          </DialogHeader>
+          <AddCategoryForm />
+        </DialogContent>
+      </Dialog>
+
+      <StashContent
+        categories={categories}
+        products={products}
+        onAddCategory={() => setIsAddCategoryOpen(true)}
+      />
     </div>
   );
 };
