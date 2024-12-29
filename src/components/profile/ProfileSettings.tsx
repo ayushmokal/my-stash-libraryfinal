@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,14 +21,63 @@ interface ProfileSettingsProps {
 const ProfileSettings = ({ open, onOpenChange, userEmail }: ProfileSettingsProps) => {
   const [username, setUsername] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [currentUsername, setCurrentUsername] = useState("");
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('id', user.id)
+          .single();
+        
+        if (profile?.username) {
+          setUsername(profile.username);
+          setCurrentUsername(profile.username);
+        }
+      }
+    };
+
+    if (open) {
+      fetchProfile();
+    }
+  }, [open]);
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      // For now, just show a success message
-      toast.success("Profile settings will be implemented soon!");
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
+
+      // Check if username is already taken (if changed)
+      if (username !== currentUsername) {
+        const { data: existingUser } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('username', username)
+          .single();
+
+        if (existingUser) {
+          toast.error("Username is already taken");
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // Update profile
+      const { error } = await supabase
+        .from('profiles')
+        .update({ username })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      toast.success("Profile updated successfully!");
+      setCurrentUsername(username);
       onOpenChange(false);
     } catch (error: any) {
       toast.error(error.message || "Failed to update profile");
@@ -57,7 +106,7 @@ const ProfileSettings = ({ open, onOpenChange, userEmail }: ProfileSettingsProps
               id="username"
               placeholder="Choose a username"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
               disabled={isLoading}
             />
             <p className="text-sm text-muted-foreground">
@@ -73,7 +122,7 @@ const ProfileSettings = ({ open, onOpenChange, userEmail }: ProfileSettingsProps
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isLoading || !username}>
               Save Changes
             </Button>
           </div>
