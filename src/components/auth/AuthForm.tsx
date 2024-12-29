@@ -32,7 +32,21 @@ const AuthForm = ({ initialUsername = "" }: AuthFormProps) => {
           },
         });
 
-        if (signUpError) throw signUpError;
+        if (signUpError) {
+          // Handle user already exists error specifically
+          if (signUpError.message === "User already registered") {
+            toast.error("This email is already registered. Please sign in instead.", {
+              duration: 5000,
+              action: {
+                label: "Sign In",
+                onClick: () => navigate("/auth"),
+              },
+            });
+            setIsLoading(false);
+            return;
+          }
+          throw signUpError;
+        }
 
         toast.success("Successfully signed up! Check your email for confirmation.");
       } else {
