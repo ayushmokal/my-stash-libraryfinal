@@ -64,23 +64,29 @@ const PublicProfile = () => {
 
   useEffect(() => {
     const fetchUserId = async () => {
-      setIsLoading(true);
-      setError(null);
-      
       try {
+        setIsLoading(true);
+        setError(null);
+        console.log('Fetching profile for username:', username);
+        
         const { data, error } = await supabase
           .from("profiles")
           .select("id")
           .eq("username", username)
           .maybeSingle();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error fetching profile:', error);
+          throw error;
+        }
         
         if (!data) {
+          console.log('No profile found for username:', username);
           setError(`Profile "${username}" not found`);
           return;
         }
 
+        console.log('Found profile:', data);
         setUserId(data.id);
       } catch (err: any) {
         console.error("Error fetching profile:", err);
