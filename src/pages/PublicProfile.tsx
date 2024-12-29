@@ -104,8 +104,10 @@ const PublicProfile = () => {
   const { data: categories = [] } = useQuery({
     queryKey: ["public-categories", userId],
     queryFn: async () => {
+      if (!username) throw new Error("Username is required");
+
       // Set the username parameter for RLS policy
-      await supabase.rpc('set_request_parameter', { 
+      await supabase.rpc('set_request_parameter', {
         name: 'username',
         value: username
       });
@@ -119,7 +121,7 @@ const PublicProfile = () => {
       if (error) throw error;
       return data as Category[];
     },
-    enabled: !!userId,
+    enabled: !!userId && !!username,
   });
 
   const { data: products = [] } = useQuery({

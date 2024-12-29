@@ -103,7 +103,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      set_request_parameter: {
+        Args: {
+          name: string
+          value: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
