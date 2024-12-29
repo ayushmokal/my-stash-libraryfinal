@@ -6,6 +6,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
   Dialog,
@@ -17,6 +18,8 @@ import { useState, useEffect } from "react";
 import EditProductForm from "./EditProductForm";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ProductCardProps {
   product: {
@@ -32,6 +35,7 @@ interface ProductCardProps {
 const ProductCard = ({ product }: ProductCardProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -46,6 +50,36 @@ const ProductCard = ({ product }: ProductCardProps) => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const handleDelete = async () => {
+    try {
+      const { error } = await supabase
+        .from("products")
+        .delete()
+        .eq("id", product.id);
+
+      if (error) throw error;
+
+      // If product has an image, delete it from storage
+      if (product.image_url) {
+        const imagePath = product.image_url.split("/").pop();
+        if (imagePath) {
+          const { error: storageError } = await supabase.storage
+            .from("product-images")
+            .remove([imagePath]);
+
+          if (storageError) {
+            console.error("Error deleting image:", storageError);
+          }
+        }
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      toast.success("Product deleted successfully");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to delete product");
+    }
+  };
 
   return (
     <>
@@ -72,6 +106,13 @@ const ProductCard = ({ product }: ProductCardProps) => {
                   className="cursor-pointer"
                 >
                   Edit
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={handleDelete}
+                  className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+                >
+                  Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
