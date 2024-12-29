@@ -104,6 +104,12 @@ const PublicProfile = () => {
   const { data: categories = [] } = useQuery({
     queryKey: ["public-categories", userId],
     queryFn: async () => {
+      // Set the username parameter for RLS policy
+      await supabase.rpc('set_request_parameter', { 
+        name: 'username',
+        value: username
+      });
+
       const { data, error } = await supabase
         .from("categories")
         .select("*")
