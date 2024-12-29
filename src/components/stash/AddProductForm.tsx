@@ -34,6 +34,7 @@ const formSchema = z.object({
 
 const AddProductForm = () => {
   const [isUploading, setIsUploading] = useState(false);
+  const [isFetchingAmazon, setIsFetchingAmazon] = useState(false);
   const queryClient = useQueryClient();
 
   // Fetch categories
@@ -59,6 +60,45 @@ const AddProductForm = () => {
       categoryId: "",
     },
   });
+
+  const fetchAmazonProduct = async (url: string) => {
+    try {
+      setIsFetchingAmazon(true);
+      const response = await fetch(
+        "https://sszyujezyguwafptmxup.functions.supabase.co/fetch-amazon-product",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ url }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch product data");
+      }
+
+      const data = await response.json();
+      
+      if (data.name) form.setValue("name", data.name);
+      if (data.brand) form.setValue("brand", data.brand);
+      if (data.image_url) {
+        // Convert image URL to File object
+        const imageResponse = await fetch(data.image_url);
+        const blob = await imageResponse.blob();
+        const file = new File([blob], "product-image.jpg", { type: "image/jpeg" });
+        const fileList = new DataTransfer();
+        fileList.items.add(file);
+        form.setValue("image", fileList.files);
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Failed to fetch product data");
+    } finally {
+      setIsFetchingAmazon(false);
+    }
+  };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
@@ -120,6 +160,13 @@ const AddProductForm = () => {
     }
   };
 
+  const handleAffiliateLinkChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const url = e.target.value;
+    if (url && url.includes("amazon")) {
+      await fetchAmazonProduct(url);
+    }
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -143,6 +190,34 @@ const AddProductForm = () => {
                   ))}
                 </SelectContent>
               </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="affiliateLink"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Amazon Affiliate Link (Optional)</FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  type="url"
+                  onChange={(e) => {
+                    field.onChange(e);
+                    handleAffiliateLinkChange(e);
+                  }}
+                  disabled={isFetchingAmazon}
+                />
+              </FormControl>
+              {isFetchingAmazon && (
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Fetching product details...
+                </div>
+              )}
               <FormMessage />
             </FormItem>
           )}
@@ -178,20 +253,6 @@ const AddProductForm = () => {
 
         <FormField
           control={form.control}
-          name="affiliateLink"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Affiliate Link (Optional)</FormLabel>
-              <FormControl>
-                <Input {...field} type="url" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
           name="image"
           render={({ field: { onChange, value, ...field } }) => (
             <FormItem>
@@ -209,7 +270,7 @@ const AddProductForm = () => {
           )}
         />
 
-        <Button type="submit" className="w-full" disabled={isUploading}>
+        <Button type="submit" className="w-full" disabled={isUploading || isFetchingAmazon}>
           {isUploading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
