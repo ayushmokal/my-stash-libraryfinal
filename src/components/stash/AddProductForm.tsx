@@ -14,13 +14,21 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const formSchema = z.object({
   name: z.string().min(1, "Product name is required"),
   brand: z.string().optional(),
   affiliateLink: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
+  categoryId: z.string().min(1, "Category is required"),
   image: z.instanceof(FileList).optional(),
 });
 
@@ -28,12 +36,27 @@ const AddProductForm = () => {
   const [isUploading, setIsUploading] = useState(false);
   const queryClient = useQueryClient();
 
+  // Fetch categories
+  const { data: categories = [] } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("categories")
+        .select("*")
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       brand: "",
       affiliateLink: "",
+      categoryId: "",
     },
   });
 
@@ -78,7 +101,7 @@ const AddProductForm = () => {
         affiliate_link: values.affiliateLink || null,
         image_url: imageUrl,
         user_id: user.id,
-        // Note: category_id will need to be added when we implement category selection
+        category_id: values.categoryId,
       });
 
       if (insertError) {
@@ -100,6 +123,31 @@ const AddProductForm = () => {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="categoryId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Category</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <FormField
           control={form.control}
           name="name"
