@@ -32,7 +32,7 @@ const AuthForm = ({ initialUsername = "" }: AuthFormProps) => {
 
       if (signUpError) throw signUpError;
 
-      toast.success("Successfully signed up! Please check your email to verify your account.");
+      toast.success("Successfully signed up!");
       navigate("/dashboard");
     } catch (error: any) {
       toast.error(error.message || "Failed to sign up");
