@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { User } from "lucide-react";
+import { User, Plus } from "lucide-react";
 import AuthForm from "@/components/auth/AuthForm";
 import AddStuffCard from "@/components/stash/AddStuffCard";
 import CategorySection from "@/components/stash/CategorySection";
@@ -9,6 +9,14 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import ProductCard from "@/components/stash/ProductCard";
 import ProfileSettings from "@/components/profile/ProfileSettings";
+import AddCategoryForm from "@/components/stash/AddCategoryForm";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,6 +43,7 @@ interface Product {
 const Index = () => {
   const [session, setSession] = useState<any>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -111,29 +120,44 @@ const Index = () => {
     <div className="container py-8 space-y-8">
       <header className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold">My stash</h1>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <User className="h-6 w-6" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>
-              {session.user.email}
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => setIsProfileOpen(true)}>
-              Profile Settings
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => toast.info("Account settings coming soon!")}>
-              Account Settings
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleSignOut} className="text-red-600">
-              Sign out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex items-center gap-4">
+          <Dialog open={isAddCategoryOpen} onOpenChange={setIsAddCategoryOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="icon">
+                <Plus className="h-6 w-6" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Add New Category</DialogTitle>
+              </DialogHeader>
+              <AddCategoryForm />
+            </DialogContent>
+          </Dialog>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <User className="h-6 w-6" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>
+                {session.user.email}
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setIsProfileOpen(true)}>
+                Profile Settings
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => toast.info("Account settings coming soon!")}>
+                Account Settings
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleSignOut} className="text-red-600">
+                Sign out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </header>
 
       <ProfileSettings
@@ -142,18 +166,31 @@ const Index = () => {
         userEmail={session.user.email}
       />
 
-      <div className="space-y-12">
-        {categories.map((category) => (
-          <CategorySection key={category.id} title={category.name}>
-            {products
-              .filter((product) => product.category_id === category.id)
-              .map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            <AddStuffCard />
-          </CategorySection>
-        ))}
-      </div>
+      {categories.length === 0 ? (
+        <div className="text-center py-12">
+          <h2 className="text-2xl font-semibold mb-4">Welcome to My Stash!</h2>
+          <p className="text-muted-foreground mb-8">
+            Get started by creating your first category to organize your stuff.
+          </p>
+          <Button onClick={() => setIsAddCategoryOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Your First Category
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-12">
+          {categories.map((category) => (
+            <CategorySection key={category.id} title={category.name}>
+              {products
+                .filter((product) => product.category_id === category.id)
+                .map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              <AddStuffCard />
+            </CategorySection>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
