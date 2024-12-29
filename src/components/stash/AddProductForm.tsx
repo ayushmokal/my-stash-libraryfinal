@@ -64,23 +64,16 @@ const AddProductForm = () => {
   const fetchAmazonProduct = async (url: string) => {
     try {
       setIsFetchingAmazon(true);
-      const response = await fetch(
-        "https://sszyujezyguwafptmxup.functions.supabase.co/fetch-amazon-product",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
-          },
-          body: JSON.stringify({ url }),
-        }
-      );
+      const response = await supabase.functions.invoke('fetch-amazon-product', {
+        body: { url }
+      });
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch product data");
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to fetch product data');
       }
 
-      const data = await response.json();
+      const data = response.data;
+      console.log('Amazon product data:', data);
       
       if (data.name) form.setValue("name", data.name);
       if (data.brand) form.setValue("brand", data.brand);
@@ -94,6 +87,7 @@ const AddProductForm = () => {
         form.setValue("image", fileList.files);
       }
     } catch (error: any) {
+      console.error('Error fetching Amazon product:', error);
       toast.error(error.message || "Failed to fetch product data");
     } finally {
       setIsFetchingAmazon(false);
