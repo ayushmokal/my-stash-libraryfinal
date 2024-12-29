@@ -8,6 +8,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import ProductCard from "@/components/stash/ProductCard";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Category {
   id: string;
@@ -20,7 +28,7 @@ interface Product {
   brand: string | null;
   image_url: string | null;
   affiliate_link: string | null;
-  category_id: string;  // Added this field to match the database schema
+  category_id: string;
 }
 
 const Index = () => {
@@ -76,6 +84,15 @@ const Index = () => {
     enabled: !!session,
   });
 
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast.success("Signed out successfully");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to sign out");
+    }
+  };
+
   if (!session) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
@@ -92,9 +109,29 @@ const Index = () => {
     <div className="container py-8 space-y-8">
       <header className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold">My stash</h1>
-        <Button variant="ghost" size="icon" onClick={() => supabase.auth.signOut()}>
-          <User className="h-6 w-6" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <User className="h-6 w-6" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>
+              {session.user.email}
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => toast.info("Profile settings coming soon!")}>
+              Profile Settings
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => toast.info("Account settings coming soon!")}>
+              Account Settings
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleSignOut} className="text-red-600">
+              Sign out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </header>
 
       <div className="space-y-12">
