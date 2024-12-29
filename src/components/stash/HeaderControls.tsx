@@ -13,7 +13,7 @@ import { useNavigate } from "react-router-dom";
 
 interface HeaderControlsProps {
   userEmail?: string;
-  username?: string;
+  username?: string | null;
   onProfileOpen: () => void;
   onAddCategoryOpen: () => void;
   onSignOut: () => void;
@@ -28,16 +28,23 @@ const HeaderControls = ({
 }: HeaderControlsProps) => {
   const navigate = useNavigate();
 
-  const handleShare = () => {
-    if (!username) {
-      toast.error("Please set a username in your profile settings first");
-      return;
+  const handleShare = async () => {
+    try {
+      if (!username) {
+        toast.error("Please set a username in your profile settings first");
+        return;
+      }
+
+      const url = `${window.location.origin}/${username}`;
+      await navigator.clipboard.writeText(url);
+      
+      toast.success("Public link copied to clipboard!", {
+        description: "Share this link with anyone to show them your stash!",
+      });
+    } catch (error) {
+      console.error('Error sharing stash:', error);
+      toast.error("Failed to copy link to clipboard");
     }
-    const url = `${window.location.origin}/${username}`;
-    navigator.clipboard.writeText(url);
-    toast.success("Public link copied to clipboard!", {
-      description: "Share this link with anyone to show them your stash!",
-    });
   };
 
   return (
