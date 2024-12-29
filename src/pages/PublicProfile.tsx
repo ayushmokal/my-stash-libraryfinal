@@ -36,6 +36,17 @@ const PublicProfile = () => {
           return;
         }
 
+        // Set the username parameter for RLS policies
+        const { error: paramError } = await supabase.rpc('set_request_parameter', {
+          name: 'username',
+          value: username
+        });
+
+        if (paramError) {
+          console.error('Error setting username parameter:', paramError);
+          throw paramError;
+        }
+
         const { data, error } = await supabase
           .from("profiles")
           .select("id")
@@ -77,7 +88,7 @@ const PublicProfile = () => {
         .from("categories")
         .select("*")
         .eq("user_id", userId)
-        .order('created_at');
+        .order('created_at', { ascending: true });
 
       if (error) throw error;
       return data;
@@ -94,7 +105,7 @@ const PublicProfile = () => {
         .from("products")
         .select("*")
         .eq("user_id", userId)
-        .order('created_at');
+        .order('created_at', { ascending: true });
 
       if (error) throw error;
       return data;
