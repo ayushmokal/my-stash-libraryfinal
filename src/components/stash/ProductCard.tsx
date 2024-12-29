@@ -13,8 +13,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import EditProductForm from "./EditProductForm";
+import { supabase } from "@/integrations/supabase/client";
+import { User } from "@supabase/supabase-js";
 
 interface ProductCardProps {
   product: {
@@ -29,24 +31,43 @@ interface ProductCardProps {
 
 const ProductCard = ({ product }: ProductCardProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   return (
     <>
       <Card className="overflow-hidden hover:shadow-lg transition-shadow relative">
-        <div className="absolute top-2 right-2 z-10">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
-                Edit
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        {user && (
+          <div className="absolute top-2 right-2 z-10">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
+                  Edit
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
         {product.image_url && (
           <div className="aspect-square w-full overflow-hidden">
             <img
