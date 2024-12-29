@@ -34,7 +34,7 @@ const AuthForm = ({ initialUsername = "" }: AuthFormProps) => {
 
         if (signUpError) throw signUpError;
 
-        toast.success("Successfully signed up!");
+        toast.success("Successfully signed up! Check your email for confirmation.");
       } else {
         // Sign in flow
         const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -42,12 +42,21 @@ const AuthForm = ({ initialUsername = "" }: AuthFormProps) => {
           password,
         });
 
-        if (signInError) throw signInError;
+        if (signInError) {
+          // Handle email not confirmed error specifically
+          if (signInError.message === "Email not confirmed") {
+            toast.error("Please confirm your email address before signing in. Check your inbox for the confirmation link.", {
+              duration: 5000,
+            });
+            setIsLoading(false);
+            return;
+          }
+          throw signInError;
+        }
 
         toast.success("Successfully signed in!");
+        navigate("/dashboard");
       }
-      
-      navigate("/dashboard");
     } catch (error: any) {
       toast.error(error.message || "Failed to authenticate");
     } finally {
