@@ -107,7 +107,6 @@ const PublicProfile = () => {
       if (!username || !userId) throw new Error("Username and userId are required");
 
       try {
-        // Set the username parameter for RLS policy
         const { error: rpcError } = await supabase.rpc('set_request_parameter', {
           name: 'username',
           value: username
