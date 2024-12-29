@@ -12,8 +12,12 @@ interface Category {
 
 interface Product {
   id: string;
+  name: string;
+  brand: string | null;
+  image_url: string | null;
+  affiliate_link: string | null;
   category_id: string;
-  [key: string]: any;
+  user_id: string;
 }
 
 interface StashContentProps {
