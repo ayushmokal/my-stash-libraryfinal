@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import ProductCard from "@/components/stash/ProductCard";
+import ProfileSettings from "@/components/profile/ProfileSettings";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +34,7 @@ interface Product {
 
 const Index = () => {
   const [session, setSession] = useState<any>(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -120,7 +122,7 @@ const Index = () => {
               {session.user.email}
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => toast.info("Profile settings coming soon!")}>
+            <DropdownMenuItem onClick={() => setIsProfileOpen(true)}>
               Profile Settings
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => toast.info("Account settings coming soon!")}>
@@ -133,6 +135,12 @@ const Index = () => {
           </DropdownMenuContent>
         </DropdownMenu>
       </header>
+
+      <ProfileSettings
+        open={isProfileOpen}
+        onOpenChange={setIsProfileOpen}
+        userEmail={session.user.email}
+      />
 
       <div className="space-y-12">
         {categories.map((category) => (
