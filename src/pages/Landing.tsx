@@ -44,9 +44,14 @@ const Landing = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-white to-gray-50">
+      {/* Banner Section */}
+      <div className="w-full bg-[#E5DEFF] py-12 mb-8 text-center">
+        <h1 className="text-4xl font-bold text-[#1A1F2C] mb-2">My Stash</h1>
+        <p className="text-[#1A1F2C]/80">Organize and share your favorite products</p>
+      </div>
+
       <div className="w-full max-w-md space-y-8 animate-fade-in">
         <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold">My Stash</h1>
           <h2 className="text-2xl font-semibold">First, claim your unique link</h2>
           <p className="text-muted-foreground">The good ones are still available!</p>
         </div>
