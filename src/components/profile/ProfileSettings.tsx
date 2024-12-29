@@ -25,18 +25,32 @@ const ProfileSettings = ({ open, onOpenChange, userEmail }: ProfileSettingsProps
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('username')
-          .eq('id', user.id)
-          .maybeSingle();
-        
-        if (profile?.username) {
-          setUsername(profile.username);
-          setCurrentUsername(profile.username);
+      try {
+        setIsLoading(true);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('username')
+            .eq('id', user.id)
+            .maybeSingle();
+          
+          if (error) {
+            console.error('Error fetching profile:', error);
+            toast.error("Failed to load profile");
+            return;
+          }
+
+          if (profile?.username) {
+            setUsername(profile.username);
+            setCurrentUsername(profile.username);
+          }
         }
+      } catch (error) {
+        console.error('Error:', error);
+        toast.error("Failed to load profile");
+      } finally {
+        setIsLoading(false);
       }
     };
 
