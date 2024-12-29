@@ -36,11 +36,17 @@ const Index = () => {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      if (session) {
+        console.log("User session:", session);
+      }
     });
 
     // Initial auth state
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      if (session) {
+        console.log("Initial session:", session);
+      }
     });
 
     return () => {
@@ -52,6 +58,7 @@ const Index = () => {
   const { data: categories = [], isLoading: categoriesLoading } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
+      console.log("Fetching categories for user:", session?.user?.id);
       const { data, error } = await supabase
         .from("categories")
         .select("*")
@@ -59,18 +66,21 @@ const Index = () => {
         .order("created_at", { ascending: true });
 
       if (error) {
+        console.error("Error fetching categories:", error);
         toast.error("Failed to load categories");
         throw error;
       }
 
+      console.log("Fetched categories:", data);
       return data;
     },
-    enabled: !!session,
+    enabled: !!session?.user?.id,
   });
 
   const { data: products = [], isLoading: productsLoading } = useQuery({
     queryKey: ["products"],
     queryFn: async () => {
+      console.log("Fetching products for user:", session?.user?.id);
       const { data, error } = await supabase
         .from("products")
         .select("*")
@@ -78,13 +88,15 @@ const Index = () => {
         .order("created_at", { ascending: true });
 
       if (error) {
+        console.error("Error fetching products:", error);
         toast.error("Failed to load products");
         throw error;
       }
 
+      console.log("Fetched products:", data);
       return data;
     },
-    enabled: !!session,
+    enabled: !!session?.user?.id,
   });
 
   const handleSignOut = async () => {
@@ -92,6 +104,7 @@ const Index = () => {
       await supabase.auth.signOut();
       toast.success("Signed out successfully");
     } catch (error: any) {
+      console.error("Sign out error:", error);
       toast.error(error.message || "Failed to sign out");
     }
   };
@@ -105,7 +118,11 @@ const Index = () => {
   }
 
   if (categoriesLoading || productsLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-xl">Loading your stash...</div>
+      </div>
+    );
   }
 
   return (
