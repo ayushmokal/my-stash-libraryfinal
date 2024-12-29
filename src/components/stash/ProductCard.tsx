@@ -38,7 +38,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    const subscription = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
 
